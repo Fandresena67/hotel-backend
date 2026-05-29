@@ -14,11 +14,17 @@ app.use(cors({
 app.use(express.json())
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  family: 4,
   auth: {
     user: 'fandresenanatolo@gmail.com',
     pass: process.env.GMAIL_PASS || 'qnhc byir kxvy netc',
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 })
 
 const bookings = []
@@ -28,7 +34,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'Backend Fandresena Hotel tourne !' })
 })
 
-//  RESERVATION 
+// RESERVATION 
 app.post('/booking', async (req, res) => {
   const { name, email, checkin, checkout, guests, hotel_id, hotel_name, total_price } = req.body
 
@@ -132,7 +138,7 @@ app.post('/contact', async (req, res) => {
   }
 })
 
-// ── LISTE RESERVATIONS 
+// LISTE RESERVATIONS 
 app.get('/bookings', (req, res) => {
   res.json(bookings)
 })
