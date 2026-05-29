@@ -1,23 +1,34 @@
 const express = require('express')
 const cors = require('cors')
 const nodemailer = require('nodemailer')
-const app = express()
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
+const app = express()
+const PORT = process.env.PORT || 5000
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST'],
+  credentials: false
+}))
+
 app.use(express.json())
 
-// CONFIG EMAIL — remplace par ton mot de passe application Gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'fandresenanatolo@gmail.com',
-    pass: 'qnhc byir kxvy netc', 
+    pass: process.env.GMAIL_PASS || 'qnhc byir kxvy netc',
   },
 })
 
 const bookings = []
 
-// RESERVATION 
+//  TEST ROUTE 
+app.get('/', (req, res) => {
+  res.json({ message: 'Backend Fandresena Hotel tourne !' })
+})
+
+//  RESERVATION 
 app.post('/booking', async (req, res) => {
   const { name, email, checkin, checkout, guests, hotel_id, hotel_name, total_price } = req.body
 
@@ -34,8 +45,8 @@ app.post('/booking', async (req, res) => {
   bookings.push(booking)
   console.log('Nouvelle reservation:', booking)
 
-  // EMAIL AU PROPRIETAIRE
   try {
+    // EMAIL AU PROPRIETAIRE
     await transporter.sendMail({
       from: 'fandresenanatolo@gmail.com',
       to: 'fandresenanatolo@gmail.com',
@@ -61,12 +72,12 @@ app.post('/booking', async (req, res) => {
     await transporter.sendMail({
       from: 'fandresenanatolo@gmail.com',
       to: email,
-      subject: `✅ Confirmation de votre reservation — ${hotel_name}`,
+      subject: `✅ Confirmation reservation — ${hotel_name}`,
       html: `
         <div style="font-family:Arial;max-width:600px;margin:auto;background:#0f172a;color:#f8fafc;padding:30px;border-radius:16px">
           <h1 style="color:#60a5fa;text-align:center">🏨 Fandresena Hotel</h1>
           <h2 style="color:#22c55e;text-align:center">✅ Reservation confirmee !</h2>
-          <p style="text-align:center;color:#94a3b8">Bonjour <strong style="color:#f8fafc">${name}</strong>, votre reservation est bien enregistree.</p>
+          <p style="text-align:center;color:#94a3b8">Bonjour <strong style="color:#f8fafc">${name}</strong></p>
           <div style="background:#1e293b;border-radius:12px;padding:20px;margin:20px 0">
             <p><strong style="color:#94a3b8">Hotel :</strong> ${hotel_name}</p>
             <p><strong style="color:#94a3b8">Arrivee :</strong> ${checkin}</p>
@@ -75,16 +86,17 @@ app.post('/booking', async (req, res) => {
             <p style="font-size:20px;color:#22c55e"><strong>Total : $${total_price}</strong></p>
           </div>
           <p style="text-align:center;color:#94a3b8;font-size:13px">
-            Questions ? WhatsApp : 034 260 3832 | Email : fandresenanatolo@gmail.com
+            WhatsApp : 034 260 3832 | Email : fandresenanatolo@gmail.com
           </p>
         </div>
       `,
     })
 
     res.json({ success: true, message: 'Reservation confirmee et emails envoyes !' })
+
   } catch (err) {
-    console.error('Erreur email:', err)
-    res.json({ success: true, message: 'Reservation enregistree (email non envoye)' })
+    console.error('Erreur email:', err.message)
+    res.json({ success: true, message: 'Reservation enregistree !' })
   }
 })
 
@@ -100,7 +112,7 @@ app.post('/contact', async (req, res) => {
     await transporter.sendMail({
       from: 'fandresenanatolo@gmail.com',
       to: 'fandresenanatolo@gmail.com',
-      subject: `📩 Nouveau message de ${name}`,
+      subject: `📩 Message de ${name}`,
       html: `
         <div style="font-family:Arial;max-width:600px;margin:auto;background:#0f172a;color:#f8fafc;padding:30px;border-radius:16px">
           <h1 style="color:#60a5fa;text-align:center">🏨 Fandresena Hotel</h1>
@@ -113,18 +125,18 @@ app.post('/contact', async (req, res) => {
         </div>
       `,
     })
-    res.json({ success: true })
+    res.json({ success: true, message: 'Message envoye !' })
   } catch (err) {
-    console.error('Erreur email:', err)
-    res.status(500).json({ success: false })
+    console.error('Erreur email:', err.message)
+    res.status(500).json({ success: false, message: 'Erreur envoi email' })
   }
 })
 
-//  LISTE RESERVATIONS 
+// ── LISTE RESERVATIONS 
 app.get('/bookings', (req, res) => {
   res.json(bookings)
 })
 
-app.listen(5000, () => {
-  console.log('✅ Backend tourne sur http://localhost:5000')
+app.listen(PORT, () => {
+  console.log(`✅ Backend tourne sur le port ${PORT}`)
 })
