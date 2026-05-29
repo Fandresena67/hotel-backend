@@ -1,40 +1,22 @@
 const express = require('express')
 const cors = require('cors')
-const nodemailer = require('nodemailer')
+const { Resend } = require('resend')
 
 const app = express()
 const PORT = process.env.PORT || 5000
+const resend = new Resend(process.env.RESEND_API_KEY || 're_CUHfTHnh_6G3qJpQUxdH2PNYpoEcNbKUw')
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST'],
-  credentials: false
-}))
-
+app.use(cors({ origin: '*', methods: ['GET', 'POST'], credentials: false }))
 app.use(express.json())
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  family: 4,
-  auth: {
-    user: 'fandresenanatolo@gmail.com',
-    pass: process.env.GMAIL_PASS || 'qnhc byir kxvy netc',
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-})
 
 const bookings = []
 
-//  TEST ROUTE 
+//  TEST 
 app.get('/', (req, res) => {
   res.json({ message: 'Backend Fandresena Hotel tourne !' })
 })
 
-// RESERVATION 
+//  RESERVATION 
 app.post('/booking', async (req, res) => {
   const { name, email, checkin, checkout, guests, hotel_id, hotel_name, total_price } = req.body
 
@@ -53,8 +35,8 @@ app.post('/booking', async (req, res) => {
 
   try {
     // EMAIL AU PROPRIETAIRE
-    await transporter.sendMail({
-      from: 'fandresenanatolo@gmail.com',
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: 'fandresenanatolo@gmail.com',
       subject: `🏨 Nouvelle reservation — ${hotel_name}`,
       html: `
@@ -75,8 +57,8 @@ app.post('/booking', async (req, res) => {
     })
 
     // EMAIL AU CLIENT
-    await transporter.sendMail({
-      from: 'fandresenanatolo@gmail.com',
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: email,
       subject: `✅ Confirmation reservation — ${hotel_name}`,
       html: `
@@ -98,6 +80,7 @@ app.post('/booking', async (req, res) => {
       `,
     })
 
+    console.log('Emails envoyes avec succes !')
     res.json({ success: true, message: 'Reservation confirmee et emails envoyes !' })
 
   } catch (err) {
@@ -115,8 +98,8 @@ app.post('/contact', async (req, res) => {
   }
 
   try {
-    await transporter.sendMail({
-      from: 'fandresenanatolo@gmail.com',
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: 'fandresenanatolo@gmail.com',
       subject: `📩 Message de ${name}`,
       html: `
@@ -131,6 +114,7 @@ app.post('/contact', async (req, res) => {
         </div>
       `,
     })
+    console.log('Message contact envoye !')
     res.json({ success: true, message: 'Message envoye !' })
   } catch (err) {
     console.error('Erreur email:', err.message)
@@ -138,7 +122,7 @@ app.post('/contact', async (req, res) => {
   }
 })
 
-// LISTE RESERVATIONS 
+//  LISTE RESERVATIONS 
 app.get('/bookings', (req, res) => {
   res.json(bookings)
 })
